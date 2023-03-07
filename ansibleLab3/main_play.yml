@@ -1,0 +1,24 @@
+---
+- name: "Install docker"
+  hosts: "app"
+  become: true
+  roles:
+    - docker
+
+
+- name: "Install nginx"
+  hosts: "app"
+  become: true
+  roles: 
+    - nginx
+
+  post_tasks: 
+  - name: "Run Django application"
+    docker_container: 
+      name: django-app
+      image: timurbabs/django:latest
+      state: started
+      ports: 
+        - "8080:8000"
+      volumes:
+        - "/home/deb/repos/catalog/static:/static"
