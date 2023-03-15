@@ -1,24 +1,64 @@
 ---
 - name: "Install docker"
   hosts: "app"
-  become: true
-  roles:
-    - docker
+  tasks: 
+    - name: Add Docker GPG apt Key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
 
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt and install docker-ce
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Install pip3
+      apt:
+        name: python3-pip
+        state: latest
+        update_cache: true
+
+    - name: Install Docker Module for Python
+      pip:
+       name: docker
 
 - name: "Install nginx"
   hosts: "app"
-  become: true
-  roles: 
-    - nginx
+  tasks: 
+    - name: Install nginx Serv
+      apt: name=nginx state=latest
+      become: true
 
-  post_tasks: 
-  - name: "Run Django application"
-    docker_container: 
-      name: django-app
-      image: timurbabs/django:latest
-      state: started
-      ports: 
-        - "8080:8000"
-      volumes:
-        - "/home/deb/repos/catalog/static:/static"
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+      become: true
+
+    
+- name: "Configure django aplliaction on docker"
+  hosts: "app"
+  tasks: 
+    - name: "Clone Repo Django"
+      git: 
+        repo: "https://github.com/mdn/django-locallibrary-tutorial.git"
+        dest: "/repos/deb"
+        clone: true
+        update: true
+      
+    - name: "Run Django application"
+      docker_container: 
+        name: django-app
+        image: timurbabs/django:latest
+        state: started
+          #shell: docker cp /home/deb/repos/catalog/static d25c88281ef9:/app/static
+        ports: 
+          - "8080:8000"
+        volumes:
+          - "/app/static:/static"

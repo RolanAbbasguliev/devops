@@ -1,10 +1,18 @@
 ---
-- name: Install nginx
+- name: Install nginx Serv
   apt: name=nginx state=latest
   become: true
+
+- name: Replace nginx.conf
+  file:
+    src: files/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    state: link
+  notify: "Restart Nginx"
 
 - name: Start nginx
   service:
       name: nginx
       state: started
   become: true
+
